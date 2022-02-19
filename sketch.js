@@ -2,8 +2,6 @@ let button;
 let a = 1;
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL)
-  canvas.position(0, 0)
-  canvas.style('z-index', '-1')
   angleMode(DEGREES)
   button = createButton('do not click');
   button.position(0, 0);
@@ -42,5 +40,3 @@ function draw() {
   
 
 }
-
-
