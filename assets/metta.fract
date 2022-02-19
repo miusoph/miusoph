@@ -1,0 +1,114 @@
+# Mandelbulber settings file
+# version 2.22
+# only modified parameters
+[main_parameters]
+ambient_occlusion 2.56;
+ambient_occlusion_quality 6;
+anim_keyframe_dir D:\bulbr\Metta\;
+aux_light_colour_1 a200 e800 8d00;
+aux_light_colour_2 9c00 ff00 4b00;
+aux_light_enabled_1 true;
+aux_light_enabled_2 true;
+aux_light_intensity_1 5.73024308162062e-05;
+aux_light_intensity_2 175.122256213352;
+aux_light_position_1 28.6421082857003 -33.8831547114092 24.8669510592429;
+aux_light_position_2 84 -34.6181951971027 30.8778957053655;
+aux_light_visibility 10.4713;
+aux_light_visibility_size 0.120226;
+background_rotation 180 180 0;
+brightness 1.2;
+camera 84.1970922520675 -34.7526768813572 23.9916460390598;
+camera_distance_to_target 34.9598635403226;
+camera_rotation 99.901628096261 -7.52106906124758 10.6449196632187;
+camera_top -0.158486344815481 0.159850117281942 0.974335680611142;
+DE_factor 0.74131;
+DOF_blur_opacity 2;
+DOF_enabled true;
+DOF_focus 10.788556098938;
+DOF_MC_global_illumination true;
+DOF_min_samples 0;
+DOF_radius 5.08;
+DOF_samples 1;
+file_background D:\imags\asyrf.png;
+flight_last_to_render 0;
+formula_1 77;
+fov 108;
+frames_per_keyframe 48;
+gamma 0.8;
+hdr true;
+image_height 1080;
+image_width 2048;
+julia_c 0.185486312925054 -0.251714008808871 -0.243892130789233;
+julia_mode true;
+keyframe_last_to_render 0;
+main_light_alpha -88.21;
+main_light_beta 46.17;
+main_light_intensity 1.95;
+main_light_visibility 1.3;
+mat1_file_color_texture D:\bulbr\speen\frame_%%%%%%%.jpg;
+mat1_is_defined true;
+mat1_metallic false;
+mat1_specular 1;
+mat1_specular_plastic_enable false;
+mat1_specular_width 1;
+mat1_surface_color_gradient 0 fd6029 999 698403 1999 fff59b 2999 f5bd22 3999 0b5e87 5000 c68876 5999 a51c64 7000 3b9fee 7999 d4ffd4 9000 aba53c;
+mat1_surface_gradient_enable false;
+mat1_texture_fractalize true;
+mat1_texture_fractalize_cube_size 8;
+mat1_texture_fractalize_start_iteration 44;
+mat1_texture_rotation 119.05 -133.6 180;
+mat1_use_color_texture true;
+mat1_use_colors_from_palette false;
+mat2_fresnel_reflectance true;
+mat2_is_defined true;
+mat2_name primitive_water_1;
+mat2_reflectance 1;
+mat2_surface_color 2300 3200 7300;
+mat2_surface_color_gradient 0 fd6029 999 698403 1999 fff59b 2999 f5bd22 3999 0b5e87 5000 c68876 5999 a51c64 7000 3b9fee 7999 d4ffd4 9000 aba53c;
+mat2_transparency_index_of_refraction 5.92;
+mat2_use_colors_from_palette false;
+mat3_fresnel_reflectance true;
+mat3_is_defined true;
+mat3_metallic false;
+mat3_reflectance 100;
+mat3_reflectance_gradient_enable true;
+mat3_specular_plastic_enable false;
+mat3_surface_gradient_enable false;
+mat3_use_colors_from_palette false;
+perspective_type fish_eye;
+primitive_plane_1_enabled true;
+primitive_plane_2_enabled true;
+primitive_plane_2_material_id 3;
+primitive_plane_2_position 0 -34.8913520901921 0;
+primitive_plane_2_rotation 112.38 -22.99 125.26;
+primitive_sphere_1_enabled true;
+primitive_sphere_1_material_id 3;
+primitive_sphere_1_position -126.313020654389 72.505930796665 118.805955897263;
+primitive_sphere_1_radius 128;
+primitive_water_1_iterations 6;
+primitive_water_1_length 1.90546e-06;
+primitive_water_1_material_id 2;
+primitive_water_1_position 0.162873049951588 -0.25186986040928 -0.42709889506816;
+primitive_water_1_relative_amplitude 0.0186208579555593;
+raytraced_reflections true;
+reflections_max 9;
+saturation 1.2;
+target 50.0542621713993 -40.7125543906936 19.4157228628797;
+textured_background true;
+view_distance_max 412.206590789194;
+volumetric_fog_colour_1_distance 8.43528996893883e-06;
+volumetric_fog_colour_2_distance 1.68705799378777e-05;
+volumetric_fog_distance_factor 1.68705799378777e-05;
+[fractal_1]
+mandelbox_folding_value -0.3;
+mandelbox_scale 1.1;
+transf_addition_constant 0 0 0.4;
+transf_addition_constant_111 3.6 2.8 1;
+transf_function_enabledx_false true;
+transf_minimum_radius_05 0;
+transf_rotation 11 -3 2;
+[keyframes]
+frame;main_camera_x;main_camera_y;main_camera_z;main_target_x;main_target_y;main_target_z;main_camera_top_x;main_camera_top_y;main_camera_top_z
+0;84.1970922520675;-34.7526768813572;23.9916460390598;50.0542621713993;-40.7125543906936;19.4157228628797;-0.158486344815481;0.159850117281942;0.974335680611142
+1;84.1970922520675;-34.7526768813572;23.9916460390598;50.0542621713993;-40.7125543906936;19.4157228628797;-0.158486344815481;0.159850117281942;0.974335680611142
+interpolation;morphAkima;morphAkima;morphAkima
