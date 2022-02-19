@@ -29,7 +29,6 @@ DOF_MC_global_illumination true;
 DOF_min_samples 0;
 DOF_radius 5.08;
 DOF_samples 1;
-file_background D:\imags\asyrf.png;
 flight_last_to_render 0;
 formula_1 77;
 fov 108;
@@ -45,7 +44,6 @@ main_light_alpha -88.21;
 main_light_beta 46.17;
 main_light_intensity 1.95;
 main_light_visibility 1.3;
-mat1_file_color_texture D:\bulbr\speen\frame_%%%%%%%.jpg;
 mat1_is_defined true;
 mat1_metallic false;
 mat1_specular 1;
@@ -107,8 +105,3 @@ transf_addition_constant_111 3.6 2.8 1;
 transf_function_enabledx_false true;
 transf_minimum_radius_05 0;
 transf_rotation 11 -3 2;
-[keyframes]
-frame;main_camera_x;main_camera_y;main_camera_z;main_target_x;main_target_y;main_target_z;main_camera_top_x;main_camera_top_y;main_camera_top_z
-0;84.1970922520675;-34.7526768813572;23.9916460390598;50.0542621713993;-40.7125543906936;19.4157228628797;-0.158486344815481;0.159850117281942;0.974335680611142
-1;84.1970922520675;-34.7526768813572;23.9916460390598;50.0542621713993;-40.7125543906936;19.4157228628797;-0.158486344815481;0.159850117281942;0.974335680611142
-interpolation;morphAkima;morphAkima;morphAkima
