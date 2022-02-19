@@ -1,6 +1,6 @@
 body {
     font-family:"Lucida Console", Monaco, monospace;
-    background: #000;
+    background: url("assets/alpha.png");
     margin:40px auto;
     max-width:80%;
     line-height:0.17;
