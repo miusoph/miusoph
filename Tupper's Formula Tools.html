@@ -1,0 +1,1829 @@
+
+<!-- saved from url=(0037)https://tuppers-formula.ovh/index.php -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Tupper's Formula Tools</title>
+<style>
+body {
+ margin: 20px;
+ background-color: #FAFAFA;
+}
+
+h2 {
+	text-align: center;
+}
+table{
+	border:1px solid #000000;
+}
+td {
+	width: 12px;
+	height: 12px;
+	font-size: 1px;
+//	border:1px solid #000000;
+}
+tr:last-child td {
+	border-width:0px 1px 0px 0px;
+}
+tr td:last-child {
+	border-width:0px 0px 1px 0px;
+}
+tr:last-child td:last-child {
+	border-width:0px 0px 0px 0px;
+}
+
+.black {
+	background-color: #000;
+	padding: 0px;
+	margin: 0px;
+}
+
+.white {
+	background-color: #fff;
+	padding: 0px;
+	margin: 0px;
+}
+#wiki, #graphOptionsDiv, #numberOptionsDiv {
+	border-style: dashed;
+	border-width: 2px;
+	border-color: #00F;
+}
+#no_stepsDiv {
+	border-style: dashed;
+	border-width: 2px;
+	border-color: #0F0;
+	padding: 5px;
+}
+#wikiMore, #graphOptions, #numberOptions {
+	margin: 20px;
+//	display: none;
+}
+#wikiLogo {
+	float: left;
+	padding: 0px 20px 0px 0px;
+}
+#wikiText {
+	float: left;
+}
+
+canvas {
+    background-color: #FFF;
+}
+
+
+textarea {
+    width: 950px;
+	height: 120px;
+}
+
+.toggleButton {
+	cursor: pointer;
+}
+
+#buttonsDiv {
+	margin: 20px 0px;
+	width: 950px;
+    text-align: center;
+}
+
+
+</style>
+
+<script language="javascript">
+
+  ///////////////////////////////////////////////////////////////
+ //   Show/hide div                                           //
+///////////////////////////////////////////////////////////////
+	function toggleDiv(id)
+	{
+		var div = document.getElementById(id);
+		if(div.style.display == 'none')
+		{
+			div.style.display = 'block';
+			div.parentNode.getElementsByClassName('toggleButton')[0].innerHTML = div.parentNode.getElementsByClassName('toggleButton')[0].innerHTML.replace(/\[\+\]/, '[-]');
+		}
+		else
+		{
+			div.style.display = 'none';
+			div.parentNode.getElementsByClassName('toggleButton')[0].innerHTML = div.parentNode.getElementsByClassName('toggleButton')[0].innerHTML.replace(/\[-\]/, '[+]');
+		}
+		
+	}
+	
+		 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	   /////////////                                    CANVAS STUFF                                          //////////////
+	  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	var canvas, canvas2, ctx;
+	var resizeCanvas=false;
+	
+	var invertedAxes = false;
+	
+	var pixelsPerUnit = 8;
+	
+	if(pixelsPerUnit<3)
+	{
+		resizeCanvas = true;
+		alert('1 unit should be at least 3 pixels wide (2 pixels used for grid).\Increasing value to 3 pixels.');
+	}
+	else if(pixelsPerUnit>8)
+	{
+		resizeCanvas = true;
+		alert('Resizing canvas (originally designed for 8 pixel per unit)');	
+	}
+	var xa = 8*pixelsPerUnit;
+	var ya = 11*pixelsPerUnit;
+	var xb = xa + pixelsPerUnit*106;
+	var yb = ya + 17*pixelsPerUnit;
+	var axl = 6*pixelsPerUnit;
+	var penDown = false;
+	var evCntr = 0;
+	var color1 = 'black';
+	var color2 = 'white';
+
+	var i, j;
+	var pixArr = new Array(17);
+	for (i=0; i<17; ++i)
+	{
+		pixArr[i] = new Array(106);
+		for(j=0; j<106; ++j)
+			pixArr[i][j] = 0;
+	}
+	
+	var isPixArrUpToDate = true;
+	
+	window.addEventListener('load', canvasApp, false);	
+
+  ///////////////////////////////////////////////////////////////
+ //   Init canvas                                             //
+///////////////////////////////////////////////////////////////	
+	function canvasApp()
+	{
+		canvas=document.getElementById("canvas");
+		if(resizeCanvas)
+		{
+			if(pixelsPerUnit<3)
+				pixelsPerUnit = 3;
+			else
+			{
+				canvas.width = Math.ceil(canvas.width*pixelsPerUnit/8);
+				canvas.height = Math.ceil(canvas.height*pixelsPerUnit/8);
+			}
+		}
+		canvas2 = document.getElementById("canvas2");
+		ctx=canvas.getContext("2d");
+		
+		canvas.addEventListener('keydown',  function (e) {keyboardHndlr(e);}, true);
+
+		
+		canvas.addEventListener("mousemove", function (e) {
+			mouseHndlr('move', e)
+		}, false);
+		canvas.addEventListener("mousedown", function (e) {
+			mouseHndlr('down', e)
+		}, false);
+		canvas.addEventListener("mouseup", function (e) {
+			mouseHndlr('up', e)
+		}, false);
+		canvas.addEventListener("mouseout", function (e) {
+			mouseHndlr('out', e)
+		}, false);
+		
+		canvas.oncontextmenu = function (e) {
+			e.preventDefault();
+		};
+		
+		var goIA = document.getElementById('go_invertAxes');
+		if(goIA && goIA.checked==true)
+			goIA.checked = false;
+		drawAxes(invertedAxes);
+		drawGrid();
+		clearGrid();
+		
+		var urlNum;
+		var hash = window.location.hash;
+		if(hash.length>1)
+		{
+			urlNum = hash.replace(/[^0-9]/g, '');
+			document.getElementById('numTA').value = urlNum;
+			num2Graph(urlNum);
+		}
+	
+	}
+	
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Select brush color for first mouse button (other buttons use second color)  //
+	///////////////////////////////////////////////////////////////////////////////////
+	function chooseColor(c)
+	{
+		if(c==0)
+		{
+			color1 = 'white';
+			color2 = 'black';
+			document.getElementById('go_black').style.borderColor = '#00F';
+			document.getElementById('go_white').style.borderColor = '#F00';
+		}
+		else
+		{
+			color1 = 'black';
+			color2 = 'white';	
+			document.getElementById('go_black').style.borderColor = '#F00';
+			document.getElementById('go_white').style.borderColor = '#00F';
+		}
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Handler for keyboard events                                                 //
+	///////////////////////////////////////////////////////////////////////////////////
+	function keyboardHndlr(e)
+	{
+		if(e.keyCode==38)
+		{
+			moveUp();
+			if(evCntr<2)
+				++evCntr;
+			else if(evCntr==2)
+				;
+			else
+				evCntr = 0;
+			e.preventDefault();
+		}
+		else if(e.keyCode==40)
+		{
+			moveDown();
+			if(evCntr>=2 && evCntr<4)
+				++evCntr;
+			else
+				evCntr = 0;
+			e.preventDefault();
+		}
+		else if(e.keyCode==37)
+		{
+			moveLeft();
+			if(evCntr==4 || evCntr==6)
+				++evCntr;
+			else
+				evCntr = 0;
+			e.preventDefault();
+		}
+		else if(e.keyCode==39)
+		{
+			moveRight();
+			if(evCntr==5 || evCntr==7)
+				++evCntr;
+			else
+				evCntr = 0;
+			e.preventDefault();
+		}
+		else if(e.keyCode==66 && evCntr==8)
+			++evCntr;
+		else if(e.keyCode==65 && evCntr==9)
+			++evCntr;
+		else
+			evCntr = 0;
+	
+		if(e.keyCode==82)
+		{
+			resetGraph();
+		}
+		if(evCntr==10)
+		{
+
+//alert(':-)');
+			runTests();
+			evCntr = 0;
+		}
+		
+//		e.preventDefault();
+	}
+
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Handler for mouse events                                                    //
+	///////////////////////////////////////////////////////////////////////////////////	
+	function mouseHndlr(res, e)
+	{
+		var currX = e.pageX - canvas.offsetLeft;
+		var currY = e.pageY - canvas.offsetTop;
+		
+		if(currX >= xa && currX < xb && currY >= ya && currY < yb)
+		{
+			isPixArrUpToDate = false;
+			
+			if (res == 'down')
+			{
+				penDown = true;
+				// draw 1 pixel
+				if(e.which == 1)
+				{
+					ctx.fillStyle = color1;
+				}
+				
+/////////////////////
+/* // middle mouse button - pixel info
+				else if(e.which == 2)
+				{
+					var imgData = ctx.getImageData(currX, currY, 1, 1);
+					alert('x='+currX+' y='+currY+'\nR:'+imgData.data[0] + ' G:'+imgData.data[1] + ' B:'+imgData.data[2] + ' A:'+imgData.data[3]);
+					e.preventDefault();			
+				}
+*/
+/////////////////////
+				
+				else
+				{
+					ctx.fillStyle = color2;
+				}
+				ctx.fillRect(Math.floor(currX/pixelsPerUnit)*pixelsPerUnit+1, Math.floor(currY/pixelsPerUnit)*pixelsPerUnit+1, pixelsPerUnit-2, pixelsPerUnit-2);
+				
+			}
+			if (res == 'up' || res == "out") 
+			{
+				penDown = false;
+			}
+			if (res == 'move') 
+			{
+				if (penDown)
+				{
+					// draw under mouse
+					ctx.fillRect(Math.floor(currX/pixelsPerUnit)*pixelsPerUnit+1, Math.floor(currY/pixelsPerUnit)*pixelsPerUnit+1, pixelsPerUnit-2, pixelsPerUnit-2);
+				}
+			}
+		}
+		else
+		{
+			penDown = false;
+		}
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Store canvas in array pixArr[]                                              //
+	///////////////////////////////////////////////////////////////////////////////////
+	function canvas2arr()
+	{
+		var binStr = '';
+//		var str = '';
+		var imgData = ctx.getImageData(xa, ya, xb-xa, yb-ya);
+		var i, j; 
+		
+		for (i=0; i<17; ++i)
+		{
+			for(j=0; j<106; ++j)
+			{
+				if(imgData.data[((i*pixelsPerUnit+pixelsPerUnit/2)*106*pixelsPerUnit+j*pixelsPerUnit+pixelsPerUnit/2)*4] == 255)
+				{
+					pixArr[i][j] = 0; // probably white pixel in center of "big" pixel; [R,G,B,A]==[255,?,?,?]
+					binStr += '0';
+				}
+				else
+				{
+					pixArr[i][j] = 1; // otherwise should be black...
+					binStr += '1';
+				}
+//				str += imgData.data[((i*pixelsPerUnit+pixelsPerUnit/2)*106*pixelsPerUnit+j*pixelsPerUnit+pixelsPerUnit/2)*4] +',';
+			}
+//			str += '\n';
+			binStr += '\n';
+		}
+		isPixArrUpToDate = true;
+		return binStr;
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Draw on canvas using values from pixArr[]                                 //
+	///////////////////////////////////////////////////////////////////////////////////
+	function arr2canvas()
+	{
+		var i, j; 
+		
+		for (j=0; j<17; ++j)
+		{
+			for(i=0; i<106; ++i)
+			{
+				if(pixArr[j][i] == 0)
+				{
+					ctx.fillStyle = 'white';
+					ctx.fillRect(xa+i*pixelsPerUnit+1, ya+j*pixelsPerUnit+1, pixelsPerUnit-2, pixelsPerUnit-2);
+				}
+				else
+				{
+					ctx.fillStyle = 'black';
+					ctx.fillRect(xa+i*pixelsPerUnit+1, ya+j*pixelsPerUnit+1, pixelsPerUnit-2, pixelsPerUnit-2);
+				}
+			}
+		}	
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   DEBUG: Dump pixArr[]                                                       //
+	///////////////////////////////////////////////////////////////////////////////////
+	function printArr()
+	{
+		var i, j, str = '';
+		for (i=0; i<17; ++i)
+		{
+			for(j=0; j<106; ++j)
+			{
+				str += pixArr[i][j] + ',';
+			}
+			str += '\n';
+		}
+		console.log(str);
+		return(str);
+	}
+	
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   (re)draw 106 x 17 grid                                                      //
+	///////////////////////////////////////////////////////////////////////////////////
+	function drawGrid()
+	{
+		var i;
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = 'gray';
+		ctx.beginPath();
+		for(i=xa; i<xb; i+=pixelsPerUnit)
+		{
+			ctx.moveTo(i, ya);
+			ctx.lineTo(i, yb);
+		}
+		for(i=ya; i<yb; i+=pixelsPerUnit)
+		{
+			ctx.moveTo(xa, i);
+			ctx.lineTo(xb, i);
+		}
+		ctx.stroke();
+
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   draw XY axes on canvas                                                      //
+	///////////////////////////////////////////////////////////////////////////////////	
+	function drawAxes(inverted)
+	{		
+
+		var i, j;
+		
+		ctx.clearRect(0, 0, canvas.width, ya);
+		ctx.clearRect(0, yb, canvas.width, canvas.height-yb);
+		ctx.clearRect(0, 0, xa, canvas.height);
+		ctx.clearRect(xb, 0, canvas.width-xb, canvas.height);
+		
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = 'white';
+		ctx.strokeRect(xa, ya, 106*pixelsPerUnit, 17*pixelsPerUnit);
+		ctx.strokeStyle = 'gray';
+		ctx.strokeRect(xa, ya, 106*pixelsPerUnit, 17*pixelsPerUnit);
+		
+		ctx.strokeStyle = 'black';
+		ctx.fillStyle = 'black';
+
+		ctx.beginPath();
+		for(i=xa; i<xb; i+=16)
+		{
+			ctx.moveTo(i, ya);
+			ctx.lineTo(i+16, ya-axl);
+			ctx.moveTo(i, yb+axl);
+			ctx.lineTo(i+16, yb);
+		}
+
+
+		if(inverted)
+		{
+			ctx.lineWidth = 2;
+
+			ctx.moveTo(xb, yb+axl);
+			ctx.lineTo(xb, ya-axl);
+			ctx.lineTo(xa-axl, ya-axl);
+			
+			// arrows
+			ctx.moveTo(xa-axl+5, ya-axl+5);
+			ctx.lineTo(xa-axl, ya-axl);
+			ctx.lineTo(xa-axl+5, ya-axl-5);
+			ctx.moveTo(xb-5, yb+axl-5);
+			ctx.lineTo(xb, yb+axl);
+			ctx.lineTo(xb+5, yb+axl-5);
+			
+			// graduation?
+			ctx.moveTo(xb, ya-axl-pixelsPerUnit);
+			ctx.lineTo(xb, ya-axl);
+			ctx.moveTo(xa, ya-axl);
+			ctx.lineTo(xa, ya-axl-pixelsPerUnit);
+			
+			ctx.moveTo(xb, ya);
+			ctx.lineTo(xb+pixelsPerUnit, ya);
+			ctx.moveTo(xb, yb);
+			ctx.lineTo(xb+pixelsPerUnit, yb);
+			
+			ctx.stroke();
+			
+			// txt
+			ctx.font = "bold 18px sans-serif";
+			ctx.fillText("x", xa-axl-pixelsPerUnit, ya-axl-pixelsPerUnit);
+			ctx.fillText("y", xb+pixelsPerUnit, yb+axl+pixelsPerUnit);
+			ctx.fillText("k+17", xb+2*pixelsPerUnit, yb+pixelsPerUnit/2);
+			ctx.fillText("k", xb+2*pixelsPerUnit, ya+pixelsPerUnit/2);
+			ctx.fillText("0", xb, ya-axl-2*pixelsPerUnit);
+			ctx.fillText("106", xa-2*pixelsPerUnit, ya-axl-2*pixelsPerUnit);
+	
+		}
+		else
+		{
+		
+			ctx.lineWidth = 2;
+			//ctx.beginPath();
+			ctx.moveTo(xa, ya-axl);
+			ctx.lineTo(xa, yb+axl);
+			ctx.lineTo(xb+axl, yb+axl);
+			
+			// arrows
+			ctx.moveTo(xa-5, ya-axl+5);
+			ctx.lineTo(xa, ya-axl);
+			ctx.lineTo(xa+5, ya-axl+5);
+			ctx.moveTo(xb+axl-5, yb+axl-5);
+			ctx.lineTo(xb+axl, yb+axl);
+			ctx.lineTo(xb+axl-5, yb+axl+5);	
+			
+			// graduation?
+			ctx.moveTo(xa, yb+axl+pixelsPerUnit);
+			ctx.lineTo(xa, yb+axl);
+			ctx.moveTo(xb, yb+axl);
+			ctx.lineTo(xb, yb+axl+pixelsPerUnit);
+			
+			ctx.moveTo(xa, ya);
+			ctx.lineTo(xa-pixelsPerUnit, ya);
+			ctx.moveTo(xa, yb);
+			ctx.lineTo(xa-pixelsPerUnit, yb);
+			
+			ctx.stroke();
+			
+			// txt
+			ctx.font = "bold 18px sans-serif";
+			ctx.fillText("x", xb+axl+pixelsPerUnit/2, yb+axl-2*pixelsPerUnit);
+			ctx.fillText("y", xa-2*pixelsPerUnit, ya-axl-pixelsPerUnit);
+			ctx.fillText("k+17", xa-7*pixelsPerUnit, ya+pixelsPerUnit/2);
+			ctx.fillText("k", xa-3*pixelsPerUnit, yb+pixelsPerUnit/2);
+			ctx.fillText("0", xa-pixelsPerUnit, yb+axl+4*pixelsPerUnit);
+			ctx.fillText("106", xb-2*pixelsPerUnit, yb+axl+4*pixelsPerUnit);
+				
+		}
+		
+		// white zig-zag
+		ctx.lineWidth = 10;
+		ctx.strokeStyle = 'white';
+		ctx.beginPath();
+		
+		ctx.moveTo(xa+2, ya-10);
+		ctx.lineTo((xa+xb)/2+50, ya-axl+10);
+		ctx.lineTo((xa+xb)/2-50, ya-10);
+		ctx.lineTo(xb-2, ya-axl+10);
+		
+		ctx.moveTo(xa+2, yb+axl-10);
+		ctx.lineTo((xa+xb)/2+50, yb+10);
+		ctx.lineTo((xa+xb)/2-50, yb+axl-10);
+		ctx.lineTo(xb-2, yb+10);
+		
+		ctx.stroke();
+		
+		// to lazy to clear rect border over axes
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = 'white';
+		ctx.strokeRect(xa, ya, 106*pixelsPerUnit, 17*pixelsPerUnit);
+		ctx.strokeRect(xa, ya, 106*pixelsPerUnit, 17*pixelsPerUnit);
+		ctx.strokeRect(xa, ya, 106*pixelsPerUnit, 17*pixelsPerUnit);
+		ctx.strokeRect(xa, ya, 106*pixelsPerUnit, 17*pixelsPerUnit);
+		ctx.strokeRect(xa, ya, 106*pixelsPerUnit, 17*pixelsPerUnit);
+		
+		ctx.strokeStyle = 'gray';
+		ctx.strokeRect(xa, ya, 106*pixelsPerUnit, 17*pixelsPerUnit);
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Clear 106 x 17 grid content                                                 //
+	///////////////////////////////////////////////////////////////////////////////////
+	function clearGrid()
+	{
+		var i,j;
+	
+		ctx.fillStyle = 'white';
+		for(j=0; j<17; ++j)
+			for(i=0; i<106; ++i)
+			{
+				ctx.fillRect(xa+i*pixelsPerUnit+1, ya+j*pixelsPerUnit+1, pixelsPerUnit-2, pixelsPerUnit-2);
+				pixArr[j][i] = '0';
+			}
+		isPixArrUpToDate = true;
+
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Reset whole canvas content                                                  //
+	///////////////////////////////////////////////////////////////////////////////////
+	function resetGraph()
+	{
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		drawAxes(invertedAxes);
+		drawGrid();
+		clearGrid();
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Invert X & Y axes                                                           //
+	///////////////////////////////////////////////////////////////////////////////////
+	function invertAxes()
+	{
+		var goIA = document.getElementById('go_invertAxes');
+		if(goIA && goIA.checked==true)
+		{
+			invertedAxes = true;
+		}
+		else
+		{
+			invertedAxes = false;
+		}
+		
+		drawAxes(invertedAxes);
+
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Move graph one unit left                                                    //
+	///////////////////////////////////////////////////////////////////////////////////	
+	function moveLeft()
+	{
+		var imgData=ctx.getImageData(xa+pixelsPerUnit,ya,105*pixelsPerUnit,17*pixelsPerUnit);
+		ctx.putImageData(imgData,xa,ya);
+		ctx.fillStyle = 'white';
+		for(var j=0; j<17; ++j)
+			ctx.fillRect(xa+105*pixelsPerUnit+1, ya+j*pixelsPerUnit+1, pixelsPerUnit-2, pixelsPerUnit-2);
+		isPixArrUpToDate = false;
+		
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Move graph one unit right                                                   //
+	///////////////////////////////////////////////////////////////////////////////////	
+	function moveRight()
+	{
+		var imgData=ctx.getImageData(xa,ya,105*pixelsPerUnit,17*pixelsPerUnit);
+		ctx.putImageData(imgData,xa+pixelsPerUnit,ya);
+		ctx.fillStyle = 'white';
+		for(var j=0; j<17; ++j)
+			ctx.fillRect(xa+1, ya+j*pixelsPerUnit+1, pixelsPerUnit-2, pixelsPerUnit-2);		
+		isPixArrUpToDate = false;
+	}
+
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Move graph one unit up                                                      //
+	///////////////////////////////////////////////////////////////////////////////////		
+	function moveUp()
+	{
+		var imgData=ctx.getImageData(xa,ya+pixelsPerUnit,106*pixelsPerUnit,16*pixelsPerUnit);
+		ctx.putImageData(imgData,xa,ya);
+		ctx.fillStyle = 'white';
+		for(var j=0; j<106; ++j)
+			ctx.fillRect(xa+j*pixelsPerUnit+1, ya+16*pixelsPerUnit+1, pixelsPerUnit-2, pixelsPerUnit-2);
+		isPixArrUpToDate = false;
+	}
+
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Move graph one unit down                                                    //
+	///////////////////////////////////////////////////////////////////////////////////	
+	function moveDown()
+	{
+		var imgData=ctx.getImageData(xa,ya,106*pixelsPerUnit,16*pixelsPerUnit);
+		ctx.putImageData(imgData,xa,ya+pixelsPerUnit);
+		ctx.fillStyle = 'white';
+		for(var j=0; j<106; ++j)
+			ctx.fillRect(xa+j*pixelsPerUnit+1, ya+1, pixelsPerUnit-2, pixelsPerUnit-2);
+		isPixArrUpToDate = false;
+	}
+	
+
+	   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	  //   If possible, move graph maximally to left without loosing any black pixels                            //
+	 //   Produces smaller Tupper's number, when axes are set as in Cartesian coordinate system - NOT inverted  //
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	function moveMaxLeft()
+	{
+		var i,j, foundSth = false;
+		
+		canvas2arr();
+		
+		for(j=0; j<106; ++j)
+		{
+			for(i=0; i<17; ++i)
+			{
+				if(pixArr[i][j]==1)
+				{
+					foundSth = true;
+					break;
+				}
+				
+			}
+			if(foundSth)
+				break;
+		}
+		if(foundSth)
+		{
+			for(i=j; i>0; --i)
+				moveLeft();
+		}	
+	}
+	
+	   /////////////////////////////////////////////////////////////////////////////////////
+	  //   If possible, move graph maximally to right without loosing any black pixels   //
+	 //   Produces smaller Tupper's number, when axes are inverted                      //
+	/////////////////////////////////////////////////////////////////////////////////////
+	function moveMaxRight()
+	{
+		var i,j, foundSth = false;
+		
+		canvas2arr();
+		
+		for(j=105; j>=0; --j)
+		{
+			for(i=0; i<17; ++i)
+			{
+				if(pixArr[i][j]==1)
+				{
+					foundSth = true;
+					break;
+				}
+				
+			}
+			if(foundSth)
+				break;
+		}
+		if(foundSth)
+		{
+			for(i=j; i<105; ++i)
+				moveRight();
+		}
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Flip graph around (local) Y axis (reflect horizontally)                     //
+	///////////////////////////////////////////////////////////////////////////////////
+	function flipImageY()
+	{
+		var str = canvas2arr();
+
+		var i, j, k;
+		
+		for(i=0,j=105,k=0; k<str.length && i<17; ++k)
+		{
+			if(str.charAt(k) == '0')
+			{
+				pixArr[i][j] = 0;
+			}
+			else if(str.charAt(k) == '1')
+			{
+				pixArr[i][j] = 1;
+			}
+			else
+				continue;
+				
+			--j;
+			if(j<0)
+			{
+				j = 105;
+				++i;
+			}
+		}
+		arr2canvas();
+		isPixArrUpToDate = true;
+
+	}
+	
+	  ///////////////////////////////////////////////////////////////////////////////////
+	 //   Flip graph around (local) X axis (reflect vertically)                       //
+	///////////////////////////////////////////////////////////////////////////////////	
+	function flipImageX()
+	{
+		var str = canvas2arr();
+
+		var i, j, k;
+		
+		for(i=16,j=0,k=0; k<str.length && i>=0; ++k)
+		{
+			if(str.charAt(k) == '0')
+			{
+				pixArr[i][j] = 0;
+			}
+			else if(str.charAt(k) == '1')
+			{
+				pixArr[i][j] = 1;
+			}
+			else
+				continue;
+				
+			++j;
+			if(j>105)
+			{
+				j = 0;
+				--i;
+			}
+		}
+		arr2canvas();
+		isPixArrUpToDate = true;
+	}
+	
+	  ////////////////////////////////////////////////////////////////////////////////////
+	 //   Invert colors of graph (black/white -> white/black)                          //
+	////////////////////////////////////////////////////////////////////////////////////	
+	function negative()
+	{
+		var str = canvas2arr();
+
+		var i, j, k;
+		
+		for(i=0,j=0,k=0; k<str.length && i<17; ++k)
+		{
+			if(str.charAt(k) == '0')
+			{
+				pixArr[i][j] = 1;
+			}
+			else if(str.charAt(k) == '1')
+			{
+				pixArr[i][j] = 0;
+			}
+			else
+				continue;
+				
+			++j;
+			if(j>105)
+			{
+				j = 0;
+				++i;
+			}
+		}
+		arr2canvas();
+		isPixArrUpToDate = true;
+	}
+	
+	  ///////////////////////////////////////////////////////////////
+	 //   Invert graph                                            //
+	///////////////////////////////////////////////////////////////		
+	function invertGraph()
+	{
+		flipImageX();
+		flipImageY();
+	}
+	
+	function runTests()
+	{
+		var assertVal1 = '35118444841267448013404150941800145728048599656l629146324687335986901379736401217S15281055462558552887192ll0082640641937'
+					   + '666275171405531633925231708061577861898153631213760S7546l025926490075228967388020531261756457025676745373714088346879474'
+					   + '04257165656075478779404916361425754630174709045643390135091223022770088185286183772054369904494S847l75371355113714S28354'
+					   + '764293812670633359819683164579828025466805293703544125647114660864S9482134S393661222874325138515541436374l45430179273572'
+					   + '82449632238144532921813602283194458348773893648913616S7068835604480';
+		if(document.getElementById('numTA'))
+			document.getElementById('numTA').value = ('30lO'+assertVal1).replace(/s/gi, 4+1).replace(/[^0-9]/g, '');
+		else
+		{
+			alert("Missing textarea with id 'numTA'");
+			return -1;
+		}
+		if(invertedAxes)
+		{
+			document.getElementById('go_invertAxes').checked = false;
+			invertAxes();
+		}
+		num2Graph(('30lO'+assertVal1).replace(/s/gi, 4+1).replace(/[^0-9]/g, ''));
+//		if(pixArr[0][0] != '0')
+//			alert('Wrong pixel color');
+		var cnt = 6;
+		var iv = setInterval(function(){if(cnt-- > 0) negative(); else clearInterval(iv);}, 800);	
+//		if(pixArr[0][0] != '0')
+//			alert('Wrong pixel color');
+		
+	}
+	  ///////////////////////////////////////////////////////////////
+	 //   Graph to binary number                                  //
+	///////////////////////////////////////////////////////////////		
+	function graph2Bin()
+	{
+		var i,j, out='';
+		
+		if(!isPixArrUpToDate)
+			canvas2arr();
+		if(invertedAxes)
+		{
+			for(j=0; j<106; ++j)
+			{
+				for(i=16; i>=0; --i)
+				{
+					out += pixArr[i][j];					
+				}
+			}
+			
+		}
+		else
+		{
+			for(j=105; j>=0; --j)
+			{
+				for(i=0; i<17; ++i)
+				{
+					out += pixArr[i][j];					
+				}
+			}
+		}
+		return out;
+	}
+	
+	  ///////////////////////////////////////////////////////////////
+	 //   Binary number to graph                                  //
+	///////////////////////////////////////////////////////////////		
+	function bin2Graph(bin)
+	{
+		var i,j, out='';
+		bl = bin.length;
+		if(bl<1802)
+			bin = pad1802(bin);
+
+		if(invertedAxes)
+		{
+			for(j=0; j<106; ++j)
+			{
+				for(i=16; i>=0; --i)
+				{
+					pixArr[i][j] = bin[j*17+16-i];					
+				}
+			}
+			
+		}
+		else
+		{
+			for(j=105; j>=0; --j)
+			{
+				for(i=0; i<17; ++i)
+				{
+					pixArr[i][j] = bin[(105-j)*17+i];					
+				}
+			}
+		}
+		arr2canvas();
+		isPixArrUpToDate = true;
+	}
+		
+	  ///////////////////////////////////////////////////////////////
+	 //   Tupper's number ('k' offset) to graph                   //
+	///////////////////////////////////////////////////////////////		
+	function num2Graph(num)
+	{
+		
+		if(num.length < 1)
+		{
+			alert('No number to convert');
+			return -1;
+		}
+		
+		var num2 = divideBy17BN(num);
+///////////////////////////////////////////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		var num2r = num2.substring(num2.indexOf('|')+1);
+		if(num2r != '0')
+		{			
+			alert('Number is not divisible by 17 (remainder = ' + (num2r) + ').\nChange number or use other plotting method.');
+			return -1;
+		}
+		else
+			num2 = num2.replace(/\|0$/, '');
+		bin2Graph(pad1802(dec2binBN(num2)));
+		return 0;
+	}
+		
+	  ///////////////////////////////////////////////////////////////
+	 //   Tuppers number ('k' offset) for graph                   //
+	///////////////////////////////////////////////////////////////		
+	function graph2Num()
+	{
+		return bin2decBN(multBin17(graph2Bin()))
+	}
+	
+	  ///////////////////////////////////////////////////////////////
+	 //   Draw Tuppers self-referential formula                   //
+	///////////////////////////////////////////////////////////////	
+	function drawTSRF(rev)
+	{
+		var numTSRF;
+		var goIA = document.getElementById('go_invertAxes');
+
+		if(rev)
+		{
+			numTSRF = '96093937991895888497167296212785275471500433966012930665150551927170280239526642468' +
+			 '96428421743507181212671537827706233559932372808741443078913259639413377234878577357498239266' +
+			 '29715517173716995165232890538221612403238855866184013235585136048828693337902491454229288667' +
+			 '08109618449609170518345406782773155170540538162738096760256562501698148208341878316384911559' +
+			 '02256100036523513703438744618483787372381982248498634650331594100549747005931383392264972494' +
+			 '61751545728366702369745461014655997933798537483143786841806593422227898388722980000748404719';
+			goIA.checked = true;
+			invertedAxes = true;
+			drawAxes(invertedAxes);
+		}
+		else
+		{
+			numTSRF = '48584506361897134235820959624942020445814005879832445494830930850619347047088099284' +
+			 '50644769865524364849997247024915119110411605739177407856919754326571855442057210445735883681' +
+			 '82982375413963433822519945219165128434833290513119319995350241375876523926487461339490687013' +
+			 '05622958132194811136853395355652908500238750928568926945559742815463865107300491067230589335' +
+			 '86052544096664351265349363643957125565695936815184334857605266940161251266951421550539554519' +
+			 '153785457525756590740540157929001765967965480064427829131488548259914721248506352686630476300';
+			goIA.checked = false;
+			invertedAxes = false;
+			drawAxes(invertedAxes);
+		}
+		document.getElementById('numTA').value = numTSRF;
+		num2Graph(numTSRF);
+	}
+	
+	  //////////////////////////////////////////////////////////////////////////////////////////
+	 //   Place binary number (read from left-to-right, top-to-bottom) in pixel array        //
+	 //   and draw it. Useful to import binary "image" from Excel, Calc, *.txt file, etc.   //
+	/////////////////////////////////////////////////////////////////////////////////////////
+	function bin2arr()
+	{
+		var bs = document.getElementById('numTA').value;
+		
+		if(bs.match(/[2-9a-zA-Z]/))
+		{
+			alert('Error: Non-binary digits in number field.');
+			return;
+		}
+		bs = bs.replace(/[^01]/g, '');
+
+		if(bs.length != 1802)
+		{
+			alert('Warning: There should be exactly 1802 binary digits (instead of '+bs.length+'). Padding with zeros, but it might damage image.');
+			bs = pad1802(bs);
+		}
+		
+		var i, j; 
+		
+		for (i=0; i<17; ++i)
+		{
+			for(j=0; j<106; ++j)
+			{
+				if(bs[i*106+j] == 0)
+				{
+					pixArr[i][j] = 0; // white pixel
+				}
+				else
+				{
+					pixArr[i][j] = 1; // black
+				}
+
+			}
+		}
+		arr2canvas();
+	}
+	
+	  /////////////////////////////////////////////////////////////////////////////////
+	 //   Plot graph calculating values of Tupper's formula for each square unit    //
+	/////////////////////////////////////////////////////////////////////////////////
+	function calcGraph_Unit(num)
+	{	
+		var x,y, yy, t1, t1r, t2, t3, t4, b1, b2;
+		
+		for(y=0; y<17; ++y)
+		{
+			for(x=0; x<106; ++x)
+			{
+				yy = addBN(num, y.toString());
+				t1 = divideBy17BN(yy).toString();
+
+				t1r = parseInt(t1.substring(t1.indexOf('|')+1));
+				t1 = t1.substring(0, t1.indexOf('|'));
+				
+				t3 = 17 * x + t1r;
+				b1 = dec2binBN(t1).toString();
+			
+				if(t3 >= b1.length)
+					b2 = '0';
+				else
+					b2 = b1.slice(0, b1.length-t3)
+				t4 = bin2decBN(b2);
+				if('02468'.indexOf(t4.slice(-1)) >= 0) // ..... % 2 == 0
+					pixArr[16-y][x] = 0;
+				else
+					pixArr[16-y][x] = 1;
+			}
+		}
+		arr2canvas();
+		
+		if(invertedAxes)
+			invertGraph();
+	}
+	
+	  /////////////////////////////////////////////////////////////////////////////////
+	 //   Plot graph using selected method    									    //
+	/////////////////////////////////////////////////////////////////////////////////
+	function plotGraph()
+	{	
+		document.getElementById('numTA').value = document.getElementById('numTA').value.replace(/[-.,]/g, '');
+		if(document.getElementById('go_smartPlot').checked)
+			num2Graph(document.getElementById('numTA').value.replace(/[^0-9]/g, ''));
+		else
+			calcGraph_Unit(document.getElementById('numTA').value.replace(/[^0-9]/g, ''));
+	}
+	
+	  ///////////////////////////////////////////////////////////////
+	 //   Generate PNG image with a graph and number              //
+	///////////////////////////////////////////////////////////////
+	function generatePNG()
+	{
+		var i, offset;
+		var incForm = document.getElementById('includeFormula').checked;
+//		var canvas2 = document.getElementById("canvas2");
+		var tupFormImg = document.getElementById("tuppersFormula");
+		canvas2.width = 990;
+		if(incForm)
+		{
+			canvas2.height = 680;
+			offset = 90;
+		}
+		else
+		{
+			canvas2.height = 600;
+			offset = 10;
+		}
+		
+		var ctx2=canvas2.getContext("2d");
+		ctx2.fillStyle = 'white';
+		ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+		ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+		
+		if(incForm)
+		{
+			ctx2.drawImage(tupFormImg, 360, 32);
+			ctx2.fillRect(350+tupFormImg.width, 32, 10, 32);
+		}
+		
+		ctx2.drawImage(canvas, 0, offset);
+		
+		var num = document.getElementById('numTA').value.trim();
+		var numO = '';
+		
+		for(i=0; i<num.length; ++i)
+		{
+			if(i%76==0 && i>0)
+			{
+				numO += '\n';
+			}
+			numO += num.charAt(i);
+		}
+		ctx2.fillStyle = 'black';
+		ctx2.font = "bold 20px sans-serif";
+		var y = 360+offset;
+		ctx2.fillText("k = ", 50, y);
+	    var lineHeight = ctx2.measureText("M").width * 1.2;
+		var lines = numO.split("\n");
+		for(i=0; i<lines.length; ++i)
+		{
+			ctx2.fillText(lines[i].trim(), 90, y);
+			y += lineHeight;
+		
+		}
+		
+		document.getElementById('link2img').href = canvas2.toDataURL();
+		document.getElementById('link2img').style.display = 'block';
+		document.getElementById('link2img2').style.display = 'block';
+		document.getElementById('linkWithNum').style.display = 'block';
+		document.getElementById('linkWithNum').href = '#' + document.getElementById('numTA').value.replace(/[^0-9]/g, '');
+		
+	}
+	
+	
+	  ///////////////////////////////////////////////////////////////
+	 //   Workaround for IE's restrictions for data URI           //
+	///////////////////////////////////////////////////////////////
+	function openImgInNewWin()
+	{
+			var docString = '<html><body><img src="'+canvas2.toDataURL("image/png")+'"/></body></html>';
+			var win = window.open();
+			win.document.write(docString);
+			win.document.close();
+	}
+	
+	
+		 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	   /////////////                               BIG NUMBERS STUFF                                          //////////////
+	  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	 /////////////              !!!!   does not work with negative numbers !!!!                             //////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+		
+	  ///////////////////////////////////////////////////////////////
+	 //   Multiply big (decimal) number stored as string by 2     //
+	///////////////////////////////////////////////////////////////
+	function mult2BN(fact)
+	{
+	  var out = '';
+	  var bp, cr = 0;
+	  for(var i=fact.length-1; i>=0; --i)
+	  {
+		bp = (fact[i] * 2 + cr);
+		cr = parseInt(bp/10); // substring?
+		out = bp%10 + '' + out;
+	  }
+	  out = (cr>0?cr:'') + '' + out;
+	  return out;
+	}
+
+
+	  ///////////////////////////////////////////////////////////////
+	 //   Add two big (decimal) numbers stored as strings         //
+	///////////////////////////////////////////////////////////////
+	function addBN(op1, op2)
+	{
+	  var out = '';
+	  var i, j, st, cr = 0;
+	  var op1l=op1.length;
+	  var op2l=op2.length;
+	/*  
+	  for(i=op1l-1,j=op2l-1; i>=0 || j>=0; --i, --j)
+	  {
+		st = (i>=0 ? op1[i] : 0) + (j>=0 ? op2[j] : 0);
+		cr = parseInt(st/10); // substring?
+		out = st%10 + '' + out;
+	  }
+	*/
+	  if(op1l>op2l)
+	  {
+		for(i=op1l-1,j=op2l-1; j>=0; --i,--j)
+		{
+		  st = parseInt(op1[i]) + parseInt(op2[j]) + cr;
+		  cr = parseInt(st/10); // substring?
+		  out = st%10 + '' + out;
+		}
+		for(; i>=0; --i)
+		{
+		  st = parseInt(op1[i]) + cr;
+		  cr = parseInt(st/10); // substring?
+		  out = st%10 + '' + out;     
+		}
+		out = (cr>0?cr:'') + '' + out;
+	  }
+	  else
+	  {
+		for(i=op1l-1,j=op2l-1; i>=0; --i,--j)
+		{
+		  st = parseInt(op1[i]) + parseInt(op2[j]) + cr;
+		  cr = parseInt(st/10); // substring?
+		  out = st%10 + '' + out;
+	 //     alert('['+i+','+j+ '] st='+st+', cr='+cr+', out='+out);
+		}
+		for(; j>=0; --j)
+		{
+		  st = parseInt(op2[j]) + cr;
+		  cr = parseInt(st/10); // substring?
+		  out = st%10 + '' + out;     
+		}
+		out = (cr>0?cr:'') + '' + out;
+	  }
+	  
+	  return out;
+	  
+	}
+
+	   ///////////////////////////////////////////////////////////////
+	  //   Compare two big (decimal) numbers stored as strings     //
+	 //        op1>op2 -> 1, op1==op2 -> 0, op1<op2 -> -1         //
+	///////////////////////////////////////////////////////////////
+	function compareBN(op1, op2)
+	{
+	  var op1l=op1.length;
+	  var op2l=op2.length;
+	  if(op1l>op2l)
+		return 1;
+	  else if(op1l<op2l)
+		return -1;
+	  // same length:
+	  for(var i=0; i<op1l; ++i)
+	  {
+		if(op1[i] > op2[i])
+		  return 1;
+		else if(op1[i] < op2[i])
+		  return -1;
+	  }
+	  return 0;
+	}
+
+	  ///////////////////////////////////////////////////////////////
+	 //   Substract two big (decimal) numbers stored as strings   //
+	///////////////////////////////////////////////////////////////
+	function subtractBN(op1, op2) // op1 must be >= op2 !!!!!!!!!
+	{
+	  var out = '';
+	  var i, j, cr=0, tmp;
+	  var op1l=op1.length;
+	  var op2l=op2.length;
+	  
+	  
+	  for(i=op1l-1,j=op2l-1; j>=0; --i,--j)
+	  {
+		tmp = parseInt(op1[i]) - parseInt(op2[j]) - cr;
+		if(tmp<0)
+		{
+		   cr = 1;
+		   tmp += 10; 
+		}
+		else
+		  cr = 0;
+		out = tmp + '' + out;
+	  }
+	  for(; i>=0; --i)
+	  {
+		tmp = parseInt(op1[i]) - cr;
+		if(tmp<0)
+		{
+		   cr = 1;
+		   tmp += 10; 
+		}
+		else
+		  cr = 0;
+		out = tmp + '' + out;   
+	  }
+	  // cr should be 0 (if only op1 was >= op2)
+	  // trim leading zeroes
+	  out = out.replace(/^0+/, '');
+	  if(out.length == 0)
+		out = '0';
+	  return out;  
+	}
+
+	  ///////////////////////////////////////////////////////////////
+	 //   Divide big (decimal) number stored as strings by 17     //
+	///////////////////////////////////////////////////////////////  
+	function divideBy17BN(n) // return format: quotient|remainder (for example: 123456787654|16)
+	{
+	 var tmp, nl = (''+n).length;
+	 var out = '';
+	  
+	 if(nl<11)
+	 {
+		var ni= parseInt(n);
+//		if(ni%17 != 0)
+//			return -1 * (ni%17);
+	   return parseInt(ni/17) + '|' + (ni%17);  
+	 }
+	   
+	 
+	 tmp = n[0];
+	 for(i=1; i<nl; ++i)
+	 {
+	   tmp += '' + n[i];
+	   tmp2 = parseInt(tmp);
+	   tmp3 = parseInt(tmp2/17);
+	   
+	   if(tmp3 < 1)
+	   {
+		 out += '0';
+		 continue;
+	   }
+	   out +=  '' + tmp3;
+	   tmp = tmp2 - 17*tmp3; 
+	  }
+
+	  out = out.replace(/^0+/, '');
+	  if(out.length == 0)
+		out = '0';
+
+	  out +=  '|' + parseInt(tmp);	// appending remainder
+//	  if(tmp != 0 && returnReminder)
+//		return -1 * tmp;
+	  return out;  
+	  
+	}
+
+	  //////////////////////////////////////////////////////////////////////////////////////////
+	 //   Convert big binary number (passed as string) to decimal (also stored as string)    //
+	//////////////////////////////////////////////////////////////////////////////////////////
+	function bin2decBN(b)
+	{
+	  var bl = b.length;
+	  var i, k;
+	  if(bl<33)
+	  {
+		return '' + parseInt(b,2);
+	  }
+	  var out = 0;
+	  
+	  for(i=bl-1, k=0; i>=0&&k<32; --i, k++)
+	  {
+		if(b[i]=='1')
+		{
+		  out += Math.pow(2,k);
+		}
+	  }
+	  var curPowOf2 = Math.pow(2,k-1);
+	//  alert(i+','+k+')) '+ curPowOf2+'\n'+out);
+	  for(; i>=0; --i, k++)
+	  {
+		curPowOf2 = mult2BN(''+curPowOf2);
+		if(b[i]=='1')
+		{
+		  out = addBN(''+out, ''+curPowOf2);
+		}
+	//    alert(i+','+k+') '+ curPowOf2+'\n'+out);
+	  }
+	  return out;
+	  
+	}
+
+	  //////////////////////////////////////////////////////////////////////////////////////
+	 //   Convert big (decimal) number (passed as string) to binary (string, too)        //
+	//////////////////////////////////////////////////////////////////////////////////////
+	function dec2binBN(d)
+	{
+	  var dl = d.length;
+	  var i, diff, out='';
+	  
+	  if(dl<33)
+	  {
+		return parseInt(d,10).toString(2);
+	  }
+	  var pows = [];
+	  for(i=0; i<32; ++i)
+	  {
+		tmp = Math.pow(2, i);
+		pows[i] = '' + tmp;
+	  }
+	  tmp +='';
+	  for(; dl>tmp.length; ++i)
+	  {
+		tmp = mult2BN(tmp);
+		pows[i] = tmp;
+	  }
+	  for(; compareBN(''+d, tmp)>=0; ++i)
+	  {
+		tmp = mult2BN(tmp);
+		pows[i] = tmp;
+	  }
+	  --i;
+	  diff = ''+d;
+	//  alert(diff);
+	  for(;i>=0;--i)
+	  {
+		if(compareBN(diff, pows[i])>=0)
+		{
+		  out += '1';
+		  diff = subtractBN(diff, pows[i]);
+	//      alert(i+') pows[i]='+pows[i]+'\ndiff='+diff+'\nout='+out);
+		}
+		else
+		  out += '0';
+	  }
+	  out = out.replace(/^0+/, '');
+	  if(out.length == 0)
+		out = '0'; 
+	  
+	  return out;  
+	}
+
+	  ///////////////////////////////////////////////////////////////////////////////////////
+	 //   Pad binary number (passed as string) with leading zeros (to 1802 digits)        //
+	///////////////////////////////////////////////////////////////////////////////////////
+	function pad1802(num)
+	{
+	  var s = num+"";
+	  while (s.length < 1802)
+		s = "0" + s;
+	  return s;
+	  
+	}
+
+	  ///////////////////////////////////////////////////////////////
+	 //   Simple binary string formatter (Tuppers Formula)        //
+	///////////////////////////////////////////////////////////////
+	function quickFormat(str)
+	{
+	  var out = '';
+	  for(i=0; i<str.length; ++i)
+	  {
+		if(i%17==0)
+		  out += '\n' + str[i];
+		else
+		  out += '\t' + str[i];
+	  }
+	  return out;
+	}
+
+	  ///////////////////////////////////////////////////////////////
+	 //   Add two big (binary) numbers stored as strings          //
+	///////////////////////////////////////////////////////////////
+	function addBin(op1, op2)
+	{
+	  var out = '';
+	  var i, j, st, cr = 0;
+	  var op1l=op1.length;
+	  var op2l=op2.length;
+
+	  if(op1l>op2l)
+	  {
+		for(i=op1l-1,j=op2l-1; j>=0; --i,--j)
+		{
+		  st = parseInt(op1[i]) + parseInt(op2[j]) + cr;
+		  cr = parseInt(st/2); // use substring instead?
+		  out = st%2 + '' + out;
+		}
+		for(; i>=0; --i)
+		{
+		  st = parseInt(op1[i]) + cr;
+		  cr = parseInt(st/2); // substring?
+		  out = st%2 + '' + out;     
+		}
+		out = (cr>0?cr:'') + '' + out;
+	  }
+	  else
+	  {
+		for(i=op1l-1,j=op2l-1; i>=0; --i,--j)
+		{
+		  st = parseInt(op1[i]) + parseInt(op2[j]) + cr;
+		  cr = parseInt(st/2); // substring?
+		  out = st%2 + '' + out;
+	 //     alert('['+i+','+j+ '] st='+st+', cr='+cr+', out='+out);
+		}
+		for(; j>=0; --j)
+		{
+		  st = parseInt(op2[j]) + cr;
+		  cr = parseInt(st/2); // substring?
+		  out = st%2 + '' + out;     
+		}
+		out = (cr>0?cr:'') + '' + out;
+	  }
+	  
+	  return out;
+	}
+
+	  ///////////////////////////////////////////////////////////////
+	 //   Multiply big (binary) number stored as strings by 17    //
+	///////////////////////////////////////////////////////////////
+	function multBin17(bin)
+	{
+		var out;
+		
+		out = bin + '0000';
+		out = addBin(out, bin);
+		return out;
+	}
+
+	  ///////////////////////////////////////////////////////////////
+	 //   Generate random "Big Number" divisible by 17            //
+	///////////////////////////////////////////////////////////////
+	function randomBN17(allBits)
+	{
+		var i, j=1802, b='0';
+		if(!allBits)
+			j = Math.round(Math.random()*1802);
+		for(i=0; i<j; ++i)
+			b += new String((Math.round(Math.random() * 1234567)+ new Date().getTime()*1357)%2);
+		b17 = multBin17(b);
+		return(bin2decBN(b17));
+	}
+	
+	
+	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	  /////////////                               NUMBER FIELD STUFF                                         //////////////
+	 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+		
+	  ///////////////////////////////////////////////////////////////
+	 //   Separate thousands (using white space character)        //
+	///////////////////////////////////////////////////////////////
+	function separateThousands()
+	{
+		var out = '';
+		var num = document.getElementById('numTA').value.replace(/[^0-9]/g, '');
+		if(num.length>3)
+		{
+			for(var i=num.length-1,j=0; i>=0; --i,++j)
+			{
+				if(j%3==0 && j>0)
+				{
+					out = ' ' + out;
+				}
+				out = num.charAt(i) + out;
+			}
+			document.getElementById('numTA').value = out;
+		}
+		else
+		{
+			document.getElementById('numTA').value = num;
+		}
+		
+	}
+
+	  ///////////////////////////////////////////////////////////////
+	 //   Remove all non numeric characters                       //
+	///////////////////////////////////////////////////////////////
+	function removeNonNumeric()
+	{
+		document.getElementById('numTA').value = document.getElementById('numTA').value.replace(/[^0-9]/g, '');
+	}
+	
+	  ///////////////////////////////////////////////////////////////
+	 //   Clear number field                                      //
+	///////////////////////////////////////////////////////////////
+	function clearNum()
+	{
+		document.getElementById('numTA').value = '';
+	}
+	
+	  ///////////////////////////////////////////////////////////////
+	 //   Show intermediate values                                //
+	///////////////////////////////////////////////////////////////
+	function showSteps()
+	{
+		var num1 = document.getElementById('numTA').value.replace(/[^0-9]/g, '');
+		var num2 = divideBy17BN(num1);
+		num2 = num2.substring(0, num2.indexOf('|'));
+		var num2o = '';
+		var binO = '';
+		var bin2o = '';		
+		var bin3a, bin3o;
+		
+		var i, j, k;
+		
+		for(i=0; i<num2.length; ++i)
+		{
+			if(i%106==0 && i>0)
+			{
+				num2o += '\n';
+			}
+			num2o += num2.charAt(i);
+		}
+		var bin = pad1802(dec2binBN(num2));
+
+		
+		for(i=0; i<bin.length; ++i)
+		{
+			if(i%106==0 && i>0)
+			{
+				binO += '\n';
+			}
+			binO += bin.charAt(i);
+		}
+		
+		for(j=0; j<17; ++j)
+		{
+			for(i=105; i>=0; --i)
+				bin2o += bin.charAt(i*17+j);
+			bin2o += '\n';
+		}
+		
+		bin3a = bin2o.split('\n');
+		bin3a = bin3a.reverse();
+		for(k=0;k<bin3a.length; ++k)
+			bin3a[k] =  bin3a[k].split('').reverse().join('');
+		bin3o = bin3a.join('\n');
+		
+		var stepsHTML = '\n<br />\n<strong>Divided by 17:</strong><br />\n<pre>\n' + num2o + '\n</pre><br /><br />\n<strong>Binary:</strong><br />\n<pre>\n' + binO 
+					+ '\n</pre>\n<br /><br />\n<strong>Binary (as 106 columns of 17-bit numbers):</strong><br />\n<pre>\n' + bin2o + '\n</pre>\n\n<br /><br />\n<strong>Binary (as 106 columns of 17-bit numbers - all reversed):</strong><br />\n<pre>\n' + bin3o + '\n</pre>\n';
+		document.getElementById('no_steps').innerHTML = stepsHTML;
+		if(document.getElementById('no_steps').style.display == 'none')
+			toggleDiv('no_steps');
+	}
+	
+	
+</script>
+
+
+
+</head>
+
+<body>
+	<p style="text-align:right">
+		Language: <u><b>EN</b></u> <a href="https://tuppers-formula.ovh/index-pl.php">PL</a>
+	</p>
+	<h2>Tupper's Formula Tools</h2>
+	<p>
+		This site:
+		</p><ul>
+			<li>Plots Tupper's formula for given <em>k</em>, where y ∈ &lt;k, k+17) and x ∈ &lt;0, 106)</li>
+			<li>Calculates <em>k</em> number for given image (graph)</li>
+		</ul>
+	<p></p>
+	<div id="wiki">
+		<span class="toggleButton" onclick="toggleDiv(&#39;wikiMore&#39;);">[+] <strong>About Tupper's (self-referential) formula</strong></span>
+		<div id="wikiMore" style="display:none">
+			<a href="https://en.wikipedia.org/wiki/Tupper%27s_self-referential_formula"><img id="wikiLogo" alt="Wikipedia Logo" src="data:image/jpg;base64,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"></a>
+			<div style="float: left;">
+			<p>Tupper's self-referential formula is a formula defined by Jeff Tupper that, when graphed in two dimensions <br>
+				at a very specific location in the plane (...) visually reproduces the formula itself.<br>
+				<em>// Actually, it reproduces all possible images that are 106 pixels wide and 17 pixels high.</em><br><br>
+			The formula is an <a href="https://en.wikipedia.org/wiki/Inequality_(mathematics)" title="Inequality (mathematics)">inequality</a> defined by:</p>
+
+					<img id="tuppersFormula" alt="{1\over 2} &lt; \left\lfloor \mathrm{mod}\left(\left\lfloor {y \over 17} \right\rfloor 2^{-17 \lfloor x \rfloor - \mathrm{mod}(\lfloor y\rfloor, 17)},2\right)\right\rfloor," src="data:image/png;base64,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">
+			<p>where ⌊ • ⌋ denotes the <a href="https://en.wikipedia.org/wiki/Floor_and_ceiling_functions" title="Floor and ceiling functions">floor function</a>, and <em>mod</em> is the <a href="https://en.wikipedia.org/wiki/Modulo_operation" title="Modulo operation">modulo operation</a>.<br><br>
+				<a href="https://en.wikipedia.org/wiki/Tupper%27s_self-referential_formula">Read more on Wikipedia...</a><br>
+				<a href="https://www.youtube.com/watch?v=_s5RFgd59ao">Watch "Numberphile" episode about <em>The 'Everything' Formula</em> (yes, axes directions are wrong...)</a>
+			</p>
+				
+			</div>
+			<div style="clear: both"></div>
+		</div>
+	</div>
+
+	<h3>Graph</h3>
+	<div id="graphDiv">
+		<canvas id="canvas" width="980" height="320" tabindex="0">
+			Your browser does not support the HTML 5 Canvas. 
+		</canvas>
+		<div id="graphOptionsDiv">
+			<span class="toggleButton" onclick="toggleDiv(&#39;graphOptions&#39;);">[+] <strong>Graph options and functions</strong></span>
+			<div id="graphOptions" style="display:none">
+				<p style="margin: 0px;float:left;">Choose color for the first mouse button: </p>
+				<div style="margin: 0 10px;float:left;width:16px;height:16px;background:black;border-width:2px;border-color:#F00;border-style:solid" id="go_black" onclick="chooseColor(1)"></div>
+				<div style="margin: 0 10px;float:left;width:16px;height:16px;background:white;border-width:2px;border-color:#00F;border-style:solid" id="go_white" onclick="chooseColor(0)"></div>
+				<div style="clear: both"></div>
+				<input type="checkbox" id="go_invertAxes" onchange="invertAxes();"> <label for="go_invertAxes">Invert axes</label><br>
+				<input type="button" id="go_invertGraph" onclick="invertGraph()" value="Invert graph (image)"><br>
+				<input type="button" id="go_negative" onclick="negative()" value="Negative"> (white/black → black/white)<br>
+				<input type="button" id="go_reset" onclick="resetGraph()" value="Reset graph (clear)"> <br>
+				<input type="button" id="go_moveLeft1U" onclick="moveLeft()" value="←
+Move graph left (1 unit)">
+				<input type="button" id="go_moveRight1U" onclick="moveRight()" value="→
+Move graph right (1 unit)">
+				<input type="button" id="go_moveUp1U" onclick="moveUp()" value="↑
+Move graph up (1 unit)">
+				<input type="button" id="go_moveDown1U" onclick="moveDown()" value="↓
+Move graph down (1 unit)"> <br>
+				<input type="button" id="go_moveLeftMax" onclick="moveMaxLeft()" value="|←
+Move graph max to left">
+				<input type="button" id="go_moveRightMax" onclick="moveMaxRight()" value="→|
+Move graph max to right"> Produces smaller 'k' number (move right when axes are inverted, left otherwise)<br>
+				<input type="button" id="go_flipX" onclick="flipImageX()" value="Flip vertically (around local X axis)">
+				<input type="button" id="go_flipX" onclick="flipImageY()" value="Flip horizontally (around local Y axis)"> <br>
+				<input type="button" id="go_drawTSRF" onclick="drawTSRF(false)" value="Load and plot Tupper&#39;s self-referential formula">
+				<input type="button" id="go_drawTSRF_rev" onclick="drawTSRF(true)" value="Load and plot Tupper&#39;s self-referential formula (reversed axes)"><br>
+				<fieldset>
+					<legend>Plot method:</legend>
+					<input type="radio" id="go_smartPlot" name="plotMethod" value="go_smartPlot" checked="">Smart - plot graph using knowledge of how Tupper's formula work<br>
+					<input type="radio" id="go_computeEachUnit" name="plotMethod" value="go_computeEachUnit">Unit-precise - plot graph calculating value for each square unit (very slow, might take a few minutes and freeze browser for a while, better use "Smart" method instead)<br>
+					<input type="radio" id="go_computeEachPixel" name="plotMethod" value="go_computeEachPixel">Pixel-precise - plot graph calculating value for each pixel (cheating, because thanks to floor function and small optimization all calculations are the same as for previous option)<br>
+				</fieldset>
+			</div>
+		</div>
+	</div>
+	
+	<div id="buttonsDiv">
+		<input type="button" onclick="document.getElementById(&#39;numTA&#39;).value=graph2Num()" value="Graph to number 
+￬"> <!-- &#8681; -->
+		<input type="button" onclick="plotGraph()" value="Number to graph 
+￪"> <!-- &#8679; -->
+	</div>
+	<h3>Number</h3>
+	<div id="numberDiv">
+		<textarea id="numTA"></textarea>
+		<div id="numberOptionsDiv">
+			<span class="toggleButton" onclick="toggleDiv(&#39;numberOptions&#39;);">[+] <strong>Number options and functions</strong></span>
+			<div id="numberOptions" style="display:none">
+				<input type="button" id="no_separateThousands" onclick="separateThousands()" value="Separate thousands">
+				<input type="button" id="no_removeNonNumeric" onclick="removeNonNumeric()" value="Remove all non numeric characters">
+				<input type="button" id="no_clearNum" onclick="clearNum()" value="Clear number field"><br>
+				<input type="button" id="no_randomNum" onclick="document.getElementById(&#39;numTA&#39;).value = randomBN17(false)" value="Generate random number">
+				<input type="button" id="no_randomNumPlot" onclick="var rbn17 = randomBN17(false); document.getElementById(&#39;numTA&#39;).value = rbn17; num2Graph(rbn17)" value="Generate random number and plot it">
+				<input type="button" id="no_randomNumPlot1802" onclick="var rbn17 = randomBN17(true); document.getElementById(&#39;numTA&#39;).value = rbn17; num2Graph(rbn17)" value="Generate random 1802 bits long number and plot it"><br>
+				<input type="button" onclick="bin2arr()" value="Binary &#39;image&#39; to graph 
+￪"> <!-- &#8679; --> Transform binary number (17 rows of 106 binary digits) into graph. Useful to import binary "image" from Excel, Calc, *.txt file, etc.<br>
+				<input type="button" id="no_showSteps" onclick="showSteps()" value="Calculate intermediate values for number above"><br><br>
+				<div id="no_stepsDiv">
+					<span class="toggleButton" onclick="toggleDiv(&#39;no_steps&#39;);">[+] <strong>Intermediate values</strong></span>
+					<div id="no_steps" style="display:none"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<br>
+	<div style="text-align: center;">
+
+	
+	
+	</div>
+	<br>
+	<br>
+	<input type="button" id="no_showSteps" onclick="generatePNG()" value="Generate image using graph and number above"> (first make sure that graph and number are consistent)
+	<input type="checkbox" id="includeFormula"> <label for="includeFormula">Include Tupper's formula?</label><br>
+	Respects axes inversion and thousands separation.
+	<br>
+
+	<canvas id="canvas2" width="0" height="0" style="/*display:none*/">
+		Your browser does not support the HTML 5 Canvas. 
+	</canvas>
+	<a id="link2img" target="_blank" style="display:none">Link to image (open in a new window; doesn't seem to work with IE)</a>
+	<a id="link2img2" href="javascript:void()" onclick="openImgInNewWin()" style="display:none">Open image in a new window (for IE)</a>
+	<a id="linkWithNum" target="_blank" href="https://tuppers-formula.ovh/index.php" style="display:none">Link to this page with number</a>
+	<br>
+	<br>
+	<p style="text-align:right">
+		Created for <a href="http://takitamblog.tk/">takitamblog.tk</a><br>
+		View source code for more information...
+	</p>
+	<!-- Copyleft, use HTML, JS & CSS code as you want. It would be nice if you leave or mention link to my mini blog, but it's not necessary :-)
+		 I will appreciate if you let me know about any modifications, upgrades, optimizations, ideas - you can send them to any e-mail in this domain -->
+	<!-- Yes, there is an easter egg :-) Need to focus and use correct keys -->
+	<!-- If you want to use this site offline, just save it on your local drive. Everything is in one file - except other language version(s) and favicon -->
+
+</body></html>
