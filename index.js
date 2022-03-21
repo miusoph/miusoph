@@ -4,7 +4,7 @@ var gsize = 7;
 var grid = 1802;
 
 // these are 1 less due to counting from 0
-var cols = 16; // does not really matter
+var cols = 105; // does not really matter
 var rows = 16; // matters alot.
 var gridArea = (cols + 1) * (rows + 1);
 
