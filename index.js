@@ -177,20 +177,8 @@ $("#presets button").click(function() {
     setBitMap();
     setPresetUrl();
     
-    
-    
-$(#presents button2").click(function() {
-  
-  	function randomBN17(allBits)
-	{
-		var i, j=1802, b='0';
-		if(!allBits)
-			j = Math.round(Math.random()*1802);
-		for(i=0; i<j; ++i)
-			b += new String((Math.round(Math.random() * 1234567)+ new Date().getTime()*1357)%2);
-		b17 = multBin17(b);
-		return(bin2decBN(b17));
-	}
+
+	
 });
 
 
