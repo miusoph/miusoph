@@ -252,7 +252,7 @@ $(function () {
 	  ///////////////////////////////////////////////////////////////
 	 //   Generate random "Big Number" divisible by 17            //
 	///////////////////////////////////////////////////////////////
-	function randomBN17(allBits)
+	$(function randomBN17(allBits)
 	{
 		var i, j=1802, b='0';
 		if(!allBits)
@@ -262,3 +262,14 @@ $(function () {
 		b17 = multBin17(b);
 		return(bin2decBN(b17));
 	}
+
+$("#presets #randomBN17").click(function() {
+    var rbn17 = $(randomBN17(true));
+
+    decError.text("");
+
+    big = new BigNumber(b.attr('dec'));
+
+    setDecString(big);
+	
+}
