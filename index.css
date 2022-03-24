@@ -36,6 +36,12 @@ textarea {
     height: 150px;
 }
 
+input[type="text"], textarea {
+
+  background-color : #333; 
+
+}
+
 #grid {
     position: absolute;
     display: block;
